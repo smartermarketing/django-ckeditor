@@ -8,6 +8,8 @@ def get_backend():
 
     if backend == "pillow":
         from ckeditor_uploader.image import pillow_backend as backend
+    elif backend == "rackspace":
+        from ckeditor_uploader.image import rackspace_backend as backend
     else:
         from ckeditor_uploader.image import dummy_backend as backend
     return backend

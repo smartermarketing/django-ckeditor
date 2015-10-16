@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 
 import os
+import string
+import random
 from datetime import datetime
 
 from django.conf import settings
@@ -14,27 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from ckeditor_uploader import image_processing
 from ckeditor_uploader import utils
 from ckeditor_uploader.forms import SearchForm
-
-
-def get_upload_filename(upload_name, user):
-    # If CKEDITOR_RESTRICT_BY_USER is True upload file to user specific path.
-    if getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False):
-        user_path = user.username
-    else:
-        user_path = ''
-
-    # Generate date based path to put uploaded file.
-    date_path = datetime.now().strftime('%Y/%m/%d')
-
-    # Complete upload path (upload_path + date_path).
-    upload_path = os.path.join(
-        settings.CKEDITOR_UPLOAD_PATH, user_path, date_path)
-
-    if getattr(settings, "CKEDITOR_UPLOAD_SLUGIFY_FILENAME", True):
-        upload_name = utils.slugify_filename(upload_name)
-
-    return default_storage.get_available_name(os.path.join(upload_path, upload_name))
-
+from basics.utils import CloudContainer, retry
 
 class ImageUploadView(generic.View):
     http_method_names = ['post']
@@ -47,9 +29,10 @@ class ImageUploadView(generic.View):
 
         backend = image_processing.get_backend()
         self._verify_file(backend, uploaded_file)
-        saved_path = self._save_file(request, uploaded_file)
-        self._create_thumbnail_if_needed(backend, saved_path)
-        url = utils.get_media_url(saved_path)
+        saved_name = self._save_file(request, uploaded_file)
+        path = getattr(settings, 'CKEDITOR_UPLOAD_PATH', "/uploads")
+        url = path + saved_name
+        self._create_thumbnail_if_needed(backend, url)
 
         # Respond with Javascript sending ckeditor upload url.
         return HttpResponse("""
@@ -68,15 +51,17 @@ class ImageUploadView(generic.View):
 
     @staticmethod
     def _save_file(request, uploaded_file):
-        filename = get_upload_filename(uploaded_file.name, request.user)
-        saved_path = default_storage.save(filename, uploaded_file)
-        return saved_path
-
+        filename = os.path.splitext(uploaded_file.name)
+        saved_name = filename[0] + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
+        cc = CloudContainer('mediaplan-images')
+        uploaded_file.seek(0)
+        data = uploaded_file.read()
+        cc.upload_data(filename=saved_name, data=data)
+        return saved_name
     @staticmethod
     def _create_thumbnail_if_needed(backend, saved_path):
         if backend.should_create_thumbnail(saved_path):
             backend.create_thumbnail(saved_path)
-
 
 upload = csrf_exempt(ImageUploadView.as_view())
 
