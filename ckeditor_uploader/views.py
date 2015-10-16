@@ -76,11 +76,7 @@ def get_image_files(user=None, path=''):
     STORAGE_DIRECTORIES = 0
     STORAGE_FILES = 1
 
-    restrict = getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False)
-    if user and not user.is_superuser and restrict:
-        user_path = user.username
-    else:
-        user_path = ''
+    user_path = ''
 
     browse_path = os.path.join(settings.CKEDITOR_UPLOAD_PATH, user_path, path)
 
