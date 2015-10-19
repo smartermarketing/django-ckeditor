@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 import string
 import random
-import logger
+import logging
 from datetime import datetime
 
 from django.conf import settings
