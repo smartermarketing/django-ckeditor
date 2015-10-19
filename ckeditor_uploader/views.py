@@ -58,7 +58,7 @@ class ImageUploadView(generic.View):
 
     @staticmethod
     def _save_file(request, uploaded_file):
-        logger.info("_save_file Enter")
+        logger.info("_save_file Enter new")
         filename = os.path.splitext(uploaded_file.name)
         logger.info("_save_file 1")
         saved_name = filename[0] + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
