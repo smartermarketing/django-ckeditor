@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import string
 import random
+import logger
 from datetime import datetime
 
 from django.conf import settings
@@ -18,6 +19,9 @@ from ckeditor_uploader import utils
 from ckeditor_uploader.forms import SearchForm
 from basics.utils import CloudContainer, retry
 
+logger = logging.getLogger()
+
+
 class ImageUploadView(generic.View):
     http_method_names = ['post']
 
@@ -25,15 +29,18 @@ class ImageUploadView(generic.View):
         """
         Uploads a file and send back its URL to CKEditor.
         """
+        logger.info("Enter ImageUploadView.post")
         uploaded_file = request.FILES['upload']
 
         backend = image_processing.get_backend()
+        logger.info("ImageUploadView.post _verify_file")
         self._verify_file(backend, uploaded_file)
+        logger.info("ImageUploadView.post _verify_file returned")
         saved_name = self._save_file(request, uploaded_file)
         path = getattr(settings, 'CKEDITOR_UPLOAD_PATH', "/uploads")
         url = path + saved_name
         self._create_thumbnail_if_needed(backend, url)
-
+        logger.info("Exit ImageUploadView.post")
         # Respond with Javascript sending ckeditor upload url.
         return HttpResponse("""
         <script type='text/javascript'>
@@ -51,12 +58,16 @@ class ImageUploadView(generic.View):
 
     @staticmethod
     def _save_file(request, uploaded_file):
+        logger.info("_save_file Enter")
         filename = os.path.splitext(uploaded_file.name)
         saved_name = filename[0] + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
         cc = CloudContainer('mediaplan-images')
         uploaded_file.seek(0)
         data = uploaded_file.read()
+        logger.info("_save_file calling upload_data")
         cc.upload_data(filename=saved_name, data=data)
+        logger.info("_save_file upload_data returned")
+        logger.info("_save_file Exit")
         return saved_name
     @staticmethod
     def _create_thumbnail_if_needed(backend, saved_path):
