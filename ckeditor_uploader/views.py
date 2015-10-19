@@ -60,8 +60,11 @@ class ImageUploadView(generic.View):
     def _save_file(request, uploaded_file):
         logger.info("_save_file Enter")
         filename = os.path.splitext(uploaded_file.name)
+        logger.info("_save_file 1")
         saved_name = filename[0] + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
+        logger.info("_save_file 2")
         cc = CloudContainer('mediaplan-images')
+        logger.info("_save_file cc created")
         uploaded_file.seek(0)
         data = uploaded_file.read()
         logger.info("_save_file calling upload_data")
