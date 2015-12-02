@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 import os
 import string
 import random
 import logging
-from datetime import datetime
-import urllib
 
 from django.conf import settings
 from django.core.files.storage import default_storage
