@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
 import os
@@ -5,6 +6,7 @@ import string
 import random
 import logging
 from datetime import datetime
+import urllib
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -21,7 +23,6 @@ from basics.utils import CloudContainer, retry
 
 logger = logging.getLogger()
 
-
 class ImageUploadView(generic.View):
     http_method_names = ['post']
 
@@ -29,18 +30,13 @@ class ImageUploadView(generic.View):
         """
         Uploads a file and send back its URL to CKEditor.
         """
-        logger.info("Enter ImageUploadView.post")
         uploaded_file = request.FILES['upload']
-
         backend = image_processing.get_backend()
-        logger.info("ImageUploadView.post _verify_file")
         self._verify_file(backend, uploaded_file)
-        logger.info("ImageUploadView.post _verify_file returned")
         saved_name = self._save_file(request, uploaded_file)
         path = getattr(settings, 'CKEDITOR_UPLOAD_PATH', "/uploads")
         url = path + saved_name
         self._create_thumbnail_if_needed(backend, url)
-        logger.info("Exit ImageUploadView.post")
         # Respond with Javascript sending ckeditor upload url.
         return HttpResponse("""
         <script type='text/javascript'>
@@ -58,19 +54,24 @@ class ImageUploadView(generic.View):
 
     @staticmethod
     def _save_file(request, uploaded_file):
-        logger.info("_save_file Enter new")
+        replace_char = {
+            u'Ä': u'AE',
+            u'Å': u'AA',
+            u'Ö': u'OE',
+            u'ä': u'ae',
+            u'å': u'aa',
+            u'ö': u'oe'
+        }
         filename = os.path.splitext(uploaded_file.name)
-        logger.info("_save_file 1")
-        saved_name = filename[0] + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
-        logger.info("_save_file 2")
+        file_name = u'%s' % filename[0]
+        #check for unicode characters like å,ö or ä
+        for k,v in replace_char.items():
+            file_name = file_name.replace(k,v)
+        saved_name = file_name + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
         cc = CloudContainer('mediaplan-images')
-        logger.info("_save_file cc created")
         uploaded_file.seek(0)
         data = uploaded_file.read()
-        logger.info("_save_file calling upload_data")
         cc.upload_data(filename=saved_name, data=data)
-        logger.info("_save_file upload_data returned")
-        logger.info("_save_file Exit")
         return saved_name
     @staticmethod
     def _create_thumbnail_if_needed(backend, saved_path):
