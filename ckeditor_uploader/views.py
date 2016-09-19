@@ -17,7 +17,7 @@ from django.views.decorators.csrf import csrf_exempt
 from ckeditor_uploader import image_processing
 from ckeditor_uploader import utils
 from ckeditor_uploader.forms import SearchForm
-from basics.utils import CloudContainer, retry
+from basics.utils import AWSCloudContainer, retry
 
 logger = logging.getLogger()
 
@@ -73,7 +73,7 @@ class ImageUploadView(generic.View):
             file_name = file_name.replace(k,v)
         saved_name = file_name + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
         logger.info("_save_file 2")
-        cc = CloudContainer('mediaplan-images')
+        cc = AWSCloudContainer('mediaplan-images')
         logger.info("_save_file cc created")
         uploaded_file.seek(0)
         data = uploaded_file.read()
