@@ -73,7 +73,7 @@ class ImageUploadView(generic.View):
             file_name = file_name.replace(k,v)
         saved_name = file_name + "_" +(''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6))) + filename[1]
         logger.info("_save_file 2")
-        cc = AWSCloudContainer('mediaplan-images')
+        cc = AWSCloudContainer('mediaplan')
         logger.info("_save_file cc created")
         uploaded_file.seek(0)
         data = uploaded_file.read()
